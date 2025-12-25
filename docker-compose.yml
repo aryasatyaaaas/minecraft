@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: minecraft-hosting-db
+    environment:
+      POSTGRES_DB: minecraft_hosting
+      POSTGRES_USER: liquid
+      POSTGRES_PASSWORD: Mangotable1123@
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - minecraft-hosting
+
+  redis:
+    image: redis:7-alpine
+    container_name: minecraft-hosting-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - minecraft-hosting
+
+  backend:
+    build: ./backend
+    container_name: minecraft-hosting-backend
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=minecraft_hosting
+      - DB_USER=liquid
+      - DB_PASSWORD=Mangotable1123@
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - minecraft-hosting
+    command: npm run dev
+
+  frontend:
+    build: ./frontend
+    container_name: minecraft-hosting-frontend
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - minecraft-hosting
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+
+networks:
+  minecraft-hosting:
+    driver: bridge

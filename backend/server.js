@@ -11,6 +11,9 @@ const serverRoutes = require('./routes/servers');
 
 const app = express();
 
+// Enable trust proxy for Nginx reverse proxy
+app.set('trust proxy', true);
+
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: process.env.NODE_ENV === 'production' ? 100 : 1000, // 1000 for dev, 100 for production
